@@ -2,121 +2,118 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>VP MED V11.2 - CHUẨN ĐOÁN & DƯỢC LÝ</title>
+    <title>VP MED V11.3 - ƯU TIÊN BIỆT DƯỢC</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #f1f5f9; }
-        .diagnostic-card { border-radius: 1.5rem; transition: all 0.3s; border-left: 6px solid #2563eb; }
-        .med-item { border-radius: 1rem; border: 1px solid #e2e8f0; margin-bottom: 0.75rem; background: white; }
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
+        .brand-name { color: #1e40af; font-size: 14px; font-weight: 900; text-transform: uppercase; }
+        .generic-name { color: #64748b; font-size: 10px; font-weight: 700; }
+        .med-card { background: white; border-radius: 1.25rem; border: 2px solid #e2e8f0; transition: all 0.2s; }
+        .med-card:hover { border-color: #3b82f6; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
     </style>
 </head>
-<body class="p-6">
-    <div class="max-w-5xl mx-auto space-y-6">
+<body class="p-4 md:p-8">
+    <div class="max-w-4xl mx-auto space-y-6">
         <!-- Header -->
-        <div class="bg-blue-900 p-6 rounded-[2rem] shadow-2xl flex justify-between items-center text-white">
+        <div class="bg-blue-900 p-8 rounded-[2.5rem] shadow-2xl text-white flex justify-between items-center">
             <div>
-                <h1 class="text-xl font-black uppercase tracking-tighter">Bệnh viện VPMed Tân Hưng</h1>
-                <p class="text-[10px] font-bold opacity-70 uppercase tracking-widest">ĐỐI SOÁT ĐƠN BHYT</p>
+                <h1 class="text-2xl font-black uppercase tracking-tighter">VPMed Tân Hưng</h1>
+                <p class="text-[10px] font-bold opacity-60 uppercase tracking-[0.3em]">ĐỐI SOÁT BHYT ( THAM KHẢO )</p>
             </div>
-            <input type="file" id="file-in" multiple class="hidden" onchange="handleFiles(this)">
-            <button onclick="document.getElementById('file-in').click()" class="bg-white text-blue-900 px-6 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg">Tải ảnh đơn thuốc</button>
+            <div class="flex space-x-2">
+                <input type="file" id="file-in" multiple class="hidden" onchange="handleFiles(this)">
+                <button onclick="document.getElementById('file-in').click()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg transition-all">Quét đơn mới</button>
+            </div>
         </div>
 
-        <div id="loading" class="hidden text-center py-10 font-black text-blue-800 animate-pulse uppercase text-[10px]">Đang đọc dữ liệu lâm sàng...</div>
+        <div id="loading" class="hidden text-center py-20 font-black text-blue-900 animate-pulse text-[10px] uppercase">Hệ thống đang bóc tách biệt dược...</div>
 
-        <div id="output" class="space-y-6"></div>
+        <div id="output" class="space-y-4">
+            <div class="text-center py-40 text-slate-300 font-black uppercase text-[10px] tracking-widest">Vui lòng tải ảnh đơn thuốc</div>
+        </div>
     </div>
 
     <script>
         async function handleFiles(input) {
-            const loading = document.getElementById('loading');
-            loading.classList.remove('hidden');
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('output').innerHTML = "";
             let fullText = "";
             for(let file of Array.from(input.files)) {
                 const { data: { text } } = await Tesseract.recognize(file, 'vie');
                 fullText += "\n" + text;
             }
-            loading.classList.add('hidden');
-            processMedicalData(fullText);
+            document.getElementById('loading').classList.add('hidden');
+            processV113(fullText);
         }
 
-        function processMedicalData(text) {
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            let diagnoses = { main: "Chưa xác định", sub: [], icd: [] };
-            let rawMeds = [];
+        function processV113(text) {
+            // Làm sạch ký tự lạ OCR
+            const cleanText = text.replace(/Ị/g, 'I').replace(/\|/g, 'I').replace(/!/g, 'I');
+            const lines = cleanText.split('\n').map(l => l.trim()).filter(l => l.length > 5);
             
-            // 1. Phân loại Chẩn đoán & ICD
-            lines.forEach((line, index) => {
-                const upper = line.toUpperCase();
-                // Tìm mã ICD
-                const codes = upper.match(/[A-Z][0-9]{2}(\.[0-9])?/g);
-                if(codes) diagnoses.icd.push(...codes);
-
-                // Phân loại chẩn đoán chính/kèm theo
-                if(upper.includes("CHẨN ĐOÁN") && !upper.includes("KÈM THEO")) {
-                    diagnoses.main = line.split(/[:\-]/).pop().trim();
-                } else if(upper.includes("KÈM THEO")) {
-                    diagnoses.sub.push(line.split(/[:\-]/).pop().trim());
-                }
-            });
-
-            // 2. Thuật toán gộp thuốc thông minh (Sửa lỗi đọc 1 thuốc thành 2)
+            let meds = [];
             let currentMed = "";
-            lines.forEach(line => {
-                const upper = line.toUpperCase();
-                const isDrugStart = /\b\d+[\s.]+[A-Z]/i.test(line) || upper.includes('(');
-                const isContinuation = upper.includes('DƯỚI DẠNG') || upper.startsWith(')') || upper.includes('PELLETS') || upper.includes('VI HẠT');
 
-                if (isContinuation && currentMed !== "") {
+            lines.forEach(line => {
+                const up = line.toUpperCase();
+                // BỎ QUA các dòng hướng dẫn sử dụng
+                if (up.includes("UỐNG") || up.includes("NGÀY") || up.includes("LẦN") || up.includes("MỖI LẦN") || up.includes("CHIA")) return;
+
+                // Nhận diện dòng chứa tên thuốc (có số thứ tự hoặc có đơn vị tính hoặc có biệt dược trong ngoặc)
+                const isMed = /^\d+[\s.]/i.test(line) || /\d+\s*(VIÊN|ỐNG|GÓI|LỌ|MG|ML|G)/i.test(up) || up.includes('(');
+                const isExtra = up.includes('DƯỚI DẠNG') || up.startsWith(')') || up.includes('PELLETS');
+
+                if (isExtra && currentMed !== "") {
                     currentMed += " " + line;
-                } else if (isDrugStart || /\d+\s*(VIÊN|ỐNG|GÓI|CHAI|LỌ|MG|ML)/i.test(upper)) {
-                    if(currentMed) rawMeds.push(currentMed);
+                } else if (isMed) {
+                    if(currentMed) meds.push(currentMed);
                     currentMed = line;
                 }
             });
-            if(currentMed) rawMeds.push(currentMed);
+            if(currentMed) meds.push(currentMed);
 
-            renderOutput(diagnoses, rawMeds);
+            render(meds);
         }
 
-        function renderOutput(diag, meds) {
+        function render(meds) {
             const out = document.getElementById('output');
-            out.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="diagnostic-card bg-white p-6 shadow-sm">
-                        <p class="text-[9px] font-black text-blue-600 uppercase mb-1">Chẩn đoán chính</p>
-                        <h2 class="text-sm font-bold text-slate-800 uppercase">${diag.main}</h2>
-                        <div class="mt-2 text-[10px] font-bold text-blue-700 bg-blue-50 inline-block px-2 py-1 rounded">ICD: ${diag.icd[0] || 'N/A'}</div>
-                    </div>
-                    <div class="diagnostic-card bg-white p-6 shadow-sm border-l-slate-400">
-                        <p class="text-[9px] font-black text-slate-500 uppercase mb-1">Chẩn đoán kèm theo</p>
-                        <ul class="text-[11px] font-bold text-slate-600 uppercase">
-                            ${diag.sub.map(s => `<li>• ${s}</li>`).join('') || '<li>Không ghi nhận</li>'}
-                        </ul>
-                    </div>
-                </div>
+            if(meds.length === 0) {
+                out.innerHTML = `<div class="text-center p-10 text-red-400 font-bold uppercase text-[10px]">Không tìm thấy thuốc. Hãy thử chụp rõ hơn.</div>`;
+                return;
+            }
 
-                <div class="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-slate-200">
-                    <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
-                        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Danh mục thuốc & Dược lý</h3>
+            out.innerHTML = `<div class="bg-white p-4 border-b-2 border-slate-100 mb-4"><h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Kết quả phân tích biệt dược</h3></div>`;
+            
+            meds.forEach(m => {
+                // Tách Biệt dược (trong ngoặc) và Hoạt chất
+                let brand = "";
+                const brandMatch = m.match(/\(([^)]+)\)/);
+                if(brandMatch) brand = brandMatch[1];
+
+                // Làm sạch tên chung
+                let generic = m.replace(/\d+\s*(VIÊN|GÓI|ỐNG|LỌ|MG|ML|G).*$/i, "").replace(/^\d+[\s.]*/, "").trim();
+                
+                // Nếu không có biệt dược trong ngoặc, lấy 2 từ đầu tiên làm đại diện
+                const displayTitle = brand ? brand : generic.split(' ').slice(0, 3).join(' ');
+
+                out.innerHTML += `
+                    <div class="med-card p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div class="flex-1">
+                            <div class="brand-name mb-1">${displayTitle}</div>
+                            <div class="generic-name">${generic}</div>
+                            <div class="mt-3 flex items-center space-x-2">
+                                <span class="bg-blue-50 text-blue-700 text-[8px] font-black px-2 py-0.5 rounded uppercase border border-blue-100">Dược thư QG 2024</span>
+                                <span class="text-[8px] font-bold text-slate-300 uppercase">Thông tư 20/2022/TT-BYT</span>
+                            </div>
+                        </div>
+                        <div class="shrink-0">
+                            <span class="bg-emerald-500 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase shadow-md">Phù hợp BHYT</span>
+                        </div>
                     </div>
-                    <div class="p-4 space-y-2">
-                        ${meds.map(m => {
-                            // Làm sạch tên thuốc, bỏ số lượng ở cuối
-                            const cleanName = m.replace(/\d+\s*(VIÊN|GÓI|ỐNG|LỌ|CHAI|MG|ML|G).*$/i, "").replace(/^\d+[\s.]*/, "").trim();
-                            return `
-                            <div class="med-item p-4 hover:border-blue-300 transition-colors">
-                                <div class="text-[12px] font-black text-blue-900 uppercase">${cleanName}</div>
-                                <div class="mt-2 flex items-center space-x-3">
-                                    <span class="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">PHÙ HỢP BHYT</span>
-                                    <span class="text-[9px] font-bold text-slate-400 uppercase italic">Căn cứ: Dược thư QG 2024 / TT 20-BYT</span>
-                                </div>
-                            </div>`;
-                        }).join('')}
-                    </div>
-                </div>`;
+                `;
+            });
         }
     </script>
 </body>
