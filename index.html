@@ -3,71 +3,83 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VPMED V12 - CDSS PRO</title>
+
+<title>VPMED V12 FINAL – CDSS BHYT</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script>
 
 <style>
-body { font-family: Inter, sans-serif; background:#f1f5f9 }
-.card { background:white; border-radius:20px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.05)}
-.warn { background:#fee2e2; color:#991b1b }
-.ok { background:#dcfce7; color:#166534 }
+body { font-family: Inter, sans-serif; background:#0f172a; }
+.card { background:#111827; border-radius:20px; padding:20px; }
+.bad { background:#7f1d1d }
+.warn { background:#78350f }
+.good { background:#14532d }
 </style>
+
 </head>
 
-<body class="p-6">
+<body class="p-6 text-white">
 
-<div class="max-w-6xl mx-auto space-y-6">
+<div class="max-w-7xl mx-auto space-y-6">
 
-<h1 class="text-xl font-black text-blue-900">VPMED V12 – CDSS PRO</h1>
-
-<input type="file" multiple onchange="handleFiles(this)" class="mb-4">
+<!-- HEADER -->
+<div class="flex justify-between items-center">
+<h1 class="text-2xl font-black">VPMED CDSS – SOÁT BHYT NGOẠI TRÚ</h1>
+<input type="file" multiple onchange="handleFiles(this)" class="text-sm">
+</div>
 
 <div id="loading" class="hidden">Đang phân tích...</div>
 
-<div id="result"></div>
+<div id="app" class="space-y-6"></div>
 
 </div>
 
 <script>
 
-// ================= DATABASE =================
+// ================= DATABASE (MOCK CHUẨN LOGIC) =================
 
 const DRUG_DB = {
-"PARACETAMOL": { group:"Giảm đau", bhyt:true },
-"AMOXICILLIN": { group:"Kháng sinh", bhyt:true },
-"PREDNISOLONE": { group:"Corticoid", bhyt:true },
-"METFORMIN": { group:"Đái tháo đường", bhyt:true }
+"ESOMEPRAZOLE": {
+    group:"PPI",
+    bhyt:true,
+    indications:["K21"],
+    maxDose:40
+},
+"PARACETAMOL": {
+    group:"Giảm đau",
+    bhyt:true,
+    indications:["J06"],
+    maxDose:4000
+},
+"KALI": {
+    group:"Điện giải",
+    bhyt:false,
+    indications:["E87"],
+    maxDose:100
+}
 };
-
-const INTERACTIONS = [
-{ a:"PREDNISOLONE", b:"METFORMIN", note:"⚠ Tăng đường huyết" }
-];
 
 // ================= OCR =================
 
-async function handleFiles(input) {
+async function handleFiles(input){
 
 document.getElementById("loading").classList.remove("hidden");
 
-let fullText = "";
+let text="";
 
 for(let file of input.files){
-
-const { data:{text} } = await Tesseract.recognize(file,'vie',{
-tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-/ ',
-preserve_interword_spaces:'1'
+const { data:{text:t} } = await Tesseract.recognize(file,'vie',{
+tessedit_char_whitelist:'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-/ '
 });
-
-fullText += text.toUpperCase() + "\n";
+text += t.toUpperCase();
 }
 
-process(fullText);
+process(text);
 
 }
 
-// ================= PROCESS =================
+// ================= CORE LOGIC =================
 
 function process(text){
 
@@ -76,92 +88,122 @@ document.getElementById("loading").classList.add("hidden");
 const lines = text.split("\n").map(x=>x.trim()).filter(x=>x);
 
 // ICD
-const icd = [...new Set(text.match(/[A-Z][0-9]{2}(\.[0-9]{1,2})?/g) || [])];
+const icd = [...new Set(text.match(/[A-Z][0-9]{2}(\.[0-9]{1,2})?/g)||[])];
 
-// DRUG
+// DRUG PARSE
 let drugs = [];
 
 lines.forEach(l=>{
-
-if(/\d+\s*(MG|ML|G|UI)/.test(l)){
-
+if(/\d+\s*(MG|ML|G)/.test(l)){
 let name = l.split(/\d/)[0].trim();
-
 let key = Object.keys(DRUG_DB).find(d=>name.includes(d));
-
 drugs.push({
 raw:name,
-key:key || name,
-info:DRUG_DB[key] || null
+key:key,
+data:DRUG_DB[key] || null
 });
-
-}
-
-});
-
-// INTERACTION CHECK
-
-let warnings = [];
-
-INTERACTIONS.forEach(i=>{
-if(drugs.find(d=>d.key===i.a) && drugs.find(d=>d.key===i.b)){
-warnings.push(i.note);
 }
 });
 
-// ICD logic
+// ================= CHECK =================
 
-if(icd.includes("E11") && drugs.find(d=>d.key==="PREDNISOLONE")){
-warnings.push("⚠ ĐTĐ + Corticoid → tăng glucose");
+let results = [];
+
+drugs.forEach(d=>{
+
+let bhyt = "❌";
+let icdCheck = "❌";
+let level = "bad";
+
+if(d.data){
+
+// BHYT
+bhyt = d.data.bhyt ? "✅" : "❌";
+
+// ICD
+let match = icd.some(i=>d.data.indications.includes(i.substring(0,3)));
+
+icdCheck = match ? "✅" : "⚠";
+
+level = (!d.data.bhyt || !match) ? "bad" : "good";
+
+}else{
+level = "warn";
+}
+
+results.push({
+name:d.raw,
+group:d.data?.group || "Không rõ",
+bhyt,
+icdCheck,
+level
+});
+
+});
+
+// ================= GLOBAL RISK =================
+
+let risk = "🟢 Hợp lý";
+
+if(results.some(r=>r.level==="bad")){
+risk = "🔴 Nguy cơ xuất toán";
+}else if(results.some(r=>r.level==="warn")){
+risk = "🟠 Cần kiểm tra";
 }
 
 // ================= RENDER =================
 
-let html = "";
+let html="";
 
 // ICD
-
 html += `
 <div class="card">
-<h2 class="font-bold mb-2">ICD</h2>
-${icd.map(i=>`<span class="px-2 py-1 bg-blue-600 text-white mr-2 rounded">${i}</span>`).join("")}
+<h2 class="font-bold mb-3 text-blue-400">ICD-10</h2>
+<div class="flex flex-wrap gap-2">
+${icd.map(i=>`<span class="bg-blue-600 px-3 py-1 rounded">${i}</span>`).join("")}
+</div>
 </div>
 `;
 
-// DRUG
-
-html += `<div class="card"><h2 class="font-bold mb-2">Thuốc</h2>`;
-
-drugs.forEach(d=>{
-
+// TABLE
 html += `
-<div class="flex justify-between border-b py-2">
-<div>
-<div class="font-bold">${d.raw}</div>
-<div class="text-xs text-gray-500">${d.info?.group || "Chưa rõ"}</div>
-</div>
-<div>
-<span class="${d.info?.bhyt ? 'ok':'warn'} px-2 py-1 text-xs rounded">
-${d.info?.bhyt ? 'BHYT OK':'Check BHYT'}
-</span>
-</div>
+<div class="card">
+<h2 class="font-bold mb-3 text-green-400">BẢNG SOÁT THUỐC BHYT</h2>
+
+<table class="w-full text-sm">
+<thead class="text-gray-400">
+<tr>
+<th class="text-left">Thuốc</th>
+<th>Nhóm</th>
+<th>BHYT</th>
+<th>Phù hợp ICD</th>
+</tr>
+</thead>
+
+<tbody>
+${results.map(r=>`
+<tr class="${r.level}">
+<td class="py-2">${r.name}</td>
+<td class="text-center">${r.group}</td>
+<td class="text-center">${r.bhyt}</td>
+<td class="text-center">${r.icdCheck}</td>
+</tr>
+`).join("")}
+</tbody>
+</table>
+
 </div>
 `;
 
-});
+// RISK
+html += `
+<div class="card">
+<h2 class="font-bold mb-2 text-red-400">KẾT LUẬN KIỂM SOÁT</h2>
+<div class="text-lg font-black">${risk}</div>
+</div>
+`;
 
-html += "</div>";
-
-// WARNINGS
-
-html += `<div class="card"><h2 class="font-bold mb-2">Cảnh báo</h2>`;
-
-html += warnings.length ? warnings.map(w=>`<div class="warn p-2 rounded mb-2">${w}</div>`).join("") :
-"<div class='ok p-2 rounded'>Không có nguy cơ</div>";
-
-html += "</div>";
-
-document.getElementById("result").innerHTML = html;
+document.getElementById("app").innerHTML = html;
 
 }
 
