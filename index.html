@@ -24,16 +24,20 @@
 <body class="p-4 md:p-8">
 
     <div class="max-w-5xl mx-auto space-y-6">
-       <!-- HEADER -->
+     <!-- HEADER MỚI: ĐÃ SỬA LOGO VÀ CHỮ NHỎ -->
 <div class="bg-white p-6 rounded-[2.5rem] shadow-xl flex justify-between items-center border-b-4 border-blue-600">
     <div class="flex items-center space-x-4">
-        <!-- Thay link ảnh logo của bạn vào src bên dưới -->
-        <div class="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg overflow-hidden">
-            <img src="ten-file-logo.png" alt="Logo" class="w-12 h-12 object-contain">
+        <!-- LOGO: Sử dụng icon dự phòng nếu link ảnh chính bị lỗi -->
+        <div class="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg overflow-hidden border-2 border-white">
+            <img src="https://img.icons8.com/fluency/96/hospital-3.png" 
+                 onerror="this.src='https://img.icons8.com/ios-filled/50/ffffff/hospital-3.png'"
+                 alt="Logo" 
+                 class="w-12 h-12 object-contain">
         </div>
         <div>
-            <h1 class="text-2xl font-black text-blue-900 tracking-tighter uppercase">Bệnh viện VPMed Tân Hưng</h1>
-            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Hệ thống đối soát Bảo Hiểm Y Tế</p>
+            <h1 class="text-2xl font-black text-blue-900 tracking-tighter uppercase leading-none">Bệnh viện VPMed Tân Hưng</h1>
+            <!-- DÒNG CHỮ NHỎ: Đã làm đậm màu và dễ đọc hơn -->
+            <p class="text-[11px] text-blue-600/70 font-extrabold uppercase tracking-[0.15em] mt-1">Hệ thống đối soát BHYT</p>
         </div>
     </div>
     <div id="ai-status" class="hidden">
