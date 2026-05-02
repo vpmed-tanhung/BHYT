@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VP MED V10.5 - TÂN HƯNG</title>
+    <title>VP MED V10.6 - TÂN HƯNG</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
     <style>
@@ -37,7 +37,7 @@
             </div>
             <div id="ai-status" class="hidden flex items-center space-x-2 bg-blue-50 px-4 py-2 rounded-full border border-blue-100">
                 <div class="w-2 h-2 bg-blue-600 rounded-full animate-ping"></div>
-                <span class="text-[10px] font-black text-blue-700 uppercase tracking-widest">Đang phân tích...</span>
+                <span class="text-[10px] font-black text-blue-700 uppercase tracking-widest">Đang đối soát...</span>
             </div>
         </div>
 
@@ -51,22 +51,39 @@
                     <p class="text-xs font-black text-slate-500 uppercase tracking-widest">Tải ảnh đơn thuốc</p>
                 </div>
                 <div class="bg-slate-900 rounded-[2.5rem] p-6 shadow-2xl">
-                    <h3 class="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-[0.3em]">Dữ liệu thô (OCR):</h3>
+                    <h3 class="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-[0.3em]">Dữ liệu gốc (OCR):</h3>
                     <div id="raw-out" class="text-[10px] text-slate-400 font-mono h-60 overflow-y-auto leading-relaxed italic">Sẵn sàng...</div>
                 </div>
                 <button onclick="smartReset()" class="w-full bg-red-500 hover:bg-red-600 text-white font-black py-5 rounded-[2.5rem] shadow-lg transition-all uppercase tracking-[0.2em] text-xs">Xóa đơn & Quét tiếp</button>
             </div>
 
             <div class="lg:col-span-8">
-                <div class="bg-white rounded-[2.5rem] shadow-2xl p-8 min-h-[600px] border border-slate-100">
-                    <div id="analysis-zone" class="space-y-6 text-center py-40 text-slate-300 font-bold uppercase text-xs tracking-widest">Sẵn sàng nhận dữ liệu đơn thuốc...</div>
+                <div class="bg-white rounded-[2.5rem] shadow-2xl p-8 min-h-[600px] border border-slate-100 relative">
+                    <div id="analysis-zone" class="space-y-6">
+                        <p class="text-center py-40 text-slate-300 font-bold uppercase text-xs tracking-widest">Đang chờ đơn thuốc...</p>
+                    </div>
+                    
+                    <!-- GHI CHÚ CĂN CỨ PHÁP LÝ -->
+                    <div id="legal-footer" class="hidden mt-8 pt-6 border-t border-slate-100">
+                        <div class="flex items-start space-x-3 bg-slate-50 p-4 rounded-2xl">
+                            <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                            <div>
+                                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Căn cứ chuyên môn:</p>
+                                <p class="text-[10px] text-slate-600 leading-relaxed font-medium italic">
+                                    Kết luận đối soát dựa trên: <strong>Dược thư Quốc gia Việt Nam</strong>, 
+                                    <strong>Thông tư Bộ Y tế</strong> về danh mục thuốc BHYT, 
+                                    <strong>Phác đồ điều trị</strong> của Bộ Y tế/Bệnh viện và 
+                                    <strong>Tờ hướng dẫn sử dụng sản phẩm</strong> chính thức.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- 1. LOGO ---
         function processLogo(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
@@ -95,13 +112,13 @@
             }
         }
 
-        // --- 2. OCR & ĐỐI SOÁT ---
         let allText = ""; let processedCount = 0; let totalFiles = 0;
 
         function smartReset() {
             allText = ""; processedCount = 0;
             document.getElementById('raw-out').innerText = "Sẵn sàng...";
-            document.getElementById('analysis-zone').innerHTML = '<p class="text-center py-40 text-slate-300 font-bold uppercase text-xs tracking-widest">Sẵn sàng nhận dữ liệu đơn thuốc...</p>';
+            document.getElementById('analysis-zone').innerHTML = '<p class="text-center py-40 text-slate-300 font-bold uppercase text-xs tracking-widest">Đang chờ đơn thuốc...</p>';
+            document.getElementById('legal-footer').classList.add('hidden');
             document.getElementById('file-in').value = "";
         }
 
@@ -118,6 +135,7 @@
                     document.getElementById('raw-out').innerText = allText;
                     performAudit();
                     document.getElementById('ai-status').classList.add('hidden');
+                    document.getElementById('legal-footer').classList.remove('hidden');
                 }
             }
         }
@@ -133,14 +151,11 @@
             let analysisHTML = '';
             lines.forEach(line => {
                 let l = line.trim().toUpperCase();
-                // DANH SÁCH TỪ KHÓA ĐỂ LOẠI BỎ LIỀU DÙNG (CẢI TIẾN)
                 const junkKeywords = ['UỐNG', 'NGÀY', 'LẦN', 'MỖI', 'TRƯỚC', 'SAU', 'SÁNG', 'CHIỀU', 'TRƯA', 'TỐI'];
                 const unitKeywords = ['VIÊN', 'ỐNG', 'CHAI', 'MG', 'ML', 'GÓI', 'LỌ', 'HỘP'];
-                
                 const hasUnit = unitKeywords.some(u => l.includes(u));
                 const hasJunk = junkKeywords.some(j => l.includes(j));
 
-                // CHỈ GIỮ LẠI DÒNG CÓ ĐƠN VỊ THUỐC VÀ KHÔNG PHẢI LÀ DÒNG HƯỚNG DẪN CÁCH DÙNG
                 if (hasUnit && !hasJunk && l.length > 5) {
                     let cleanName = line.trim().replace(/\d+\s*(Viên|Gói|Ống|Lọ).*$/i, "").replace(/^[L|I|!|\-|\d.]+\s*/i, "").trim();
                     if(cleanName.length > 3) {
