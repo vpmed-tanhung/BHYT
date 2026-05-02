@@ -2,37 +2,31 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>VP MED V11.3 - ƯU TIÊN BIỆT DƯỢC</title>
+    <title>VP MED V11.4 - ƯU TIÊN BIỆT DƯỢC & HOẠT CHẤT</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background: #f8fafc; }
-        .brand-name { color: #1e40af; font-size: 14px; font-weight: 900; text-transform: uppercase; }
-        .generic-name { color: #64748b; font-size: 10px; font-weight: 700; }
-        .med-card { background: white; border-radius: 1.25rem; border: 2px solid #e2e8f0; transition: all 0.2s; }
-        .med-card:hover { border-color: #3b82f6; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        body { font-family: 'Inter', sans-serif; background: #f1f5f9; }
+        .brand-header { font-size: 16px; font-weight: 900; color: #1e40af; text-transform: uppercase; letter-spacing: -0.02em; }
+        .generic-sub { font-size: 11px; font-weight: 600; color: #64748b; line-height: 1.4; }
+        .med-card { background: white; border-radius: 1.5rem; border: 1px solid #e2e8f0; transition: all 0.2s; position: relative; overflow: hidden; }
+        .med-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: #3b82f6; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4">
     <div class="max-w-4xl mx-auto space-y-6">
-        <!-- Header -->
-        <div class="bg-blue-900 p-8 rounded-[2.5rem] shadow-2xl text-white flex justify-between items-center">
+        <div class="bg-blue-900 p-6 rounded-[2rem] shadow-2xl flex justify-between items-center text-white">
             <div>
-                <h1 class="text-2xl font-black uppercase tracking-tighter">VPMed Tân Hưng</h1>
-                <p class="text-[10px] font-bold opacity-60 uppercase tracking-[0.3em]">ĐỐI SOÁT BHYT ( THAM KHẢO )</p>
+                <h1 class="text-xl font-black uppercase">VPMed Tân Hưng</h1>
+                <p class="text-[9px] font-bold opacity-60 uppercase">ĐỐI SOÁT BHYT (THAM KHẢO)</p>
             </div>
-            <div class="flex space-x-2">
-                <input type="file" id="file-in" multiple class="hidden" onchange="handleFiles(this)">
-                <button onclick="document.getElementById('file-in').click()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase shadow-lg transition-all">Quét đơn mới</button>
-            </div>
+            <input type="file" id="file-in" multiple class="hidden" onchange="handleFiles(this)">
+            <button onclick="document.getElementById('file-in').click()" class="bg-white text-blue-900 px-5 py-2.5 rounded-xl font-black text-[10px] uppercase shadow-lg">Quét đơn</button>
         </div>
 
-        <div id="loading" class="hidden text-center py-20 font-black text-blue-900 animate-pulse text-[10px] uppercase">Hệ thống đang bóc tách biệt dược...</div>
-
-        <div id="output" class="space-y-4">
-            <div class="text-center py-40 text-slate-300 font-black uppercase text-[10px] tracking-widest">Vui lòng tải ảnh đơn thuốc</div>
-        </div>
+        <div id="loading" class="hidden text-center py-10 font-black text-blue-800 animate-pulse text-[10px] uppercase">Đang bóc tách hoạt chất và biệt dược...</div>
+        <div id="output" class="space-y-4"></div>
     </div>
 
     <script>
@@ -45,25 +39,27 @@
                 fullText += "\n" + text;
             }
             document.getElementById('loading').classList.add('hidden');
-            processV113(fullText);
+            processV114(fullText);
         }
 
-        function processV113(text) {
-            // Làm sạch ký tự lạ OCR
-            const cleanText = text.replace(/Ị/g, 'I').replace(/\|/g, 'I').replace(/!/g, 'I');
-            const lines = cleanText.split('\n').map(l => l.trim()).filter(l => l.length > 5);
-            
+        function cleanMedLine(line) {
+            // Loại bỏ các ký tự nhiễu OCR và muối/tá dược không phải tên thuốc chính
+            return line.replace(/Ị/g, 'I').replace(/\|/g, 'I').replace(/!/g, 'I')
+                       .replace(/DƯỚI DẠNG/gi, "").replace(/TRIHYDRAT|MAGNESI|CLAVULANAT|PELLETS|KALI/gi, "").trim();
+        }
+
+        function processV114(text) {
+            const rawLines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3);
             let meds = [];
             let currentMed = "";
 
-            lines.forEach(line => {
+            rawLines.forEach(line => {
                 const up = line.toUpperCase();
-                // BỎ QUA các dòng hướng dẫn sử dụng
-                if (up.includes("UỐNG") || up.includes("NGÀY") || up.includes("LẦN") || up.includes("MỖI LẦN") || up.includes("CHIA")) return;
+                // Bỏ qua hướng dẫn sử dụng
+                if (up.includes("UỐNG") || up.includes("NGÀY") || up.includes("LẦN") || up.length < 5) return;
 
-                // Nhận diện dòng chứa tên thuốc (có số thứ tự hoặc có đơn vị tính hoặc có biệt dược trong ngoặc)
                 const isMed = /^\d+[\s.]/i.test(line) || /\d+\s*(VIÊN|ỐNG|GÓI|LỌ|MG|ML|G)/i.test(up) || up.includes('(');
-                const isExtra = up.includes('DƯỚI DẠNG') || up.startsWith(')') || up.includes('PELLETS');
+                const isExtra = up.includes('DƯỚI DẠNG') || up.startsWith(')') || up.includes('PELLETS') || up.includes('VI HẠT');
 
                 if (isExtra && currentMed !== "") {
                     currentMed += " " + line;
@@ -73,43 +69,47 @@
                 }
             });
             if(currentMed) meds.push(currentMed);
-
-            render(meds);
+            renderV114(meds);
         }
 
-        function render(meds) {
+        function renderV114(meds) {
             const out = document.getElementById('output');
             if(meds.length === 0) {
-                out.innerHTML = `<div class="text-center p-10 text-red-400 font-bold uppercase text-[10px]">Không tìm thấy thuốc. Hãy thử chụp rõ hơn.</div>`;
+                out.innerHTML = `<div class="text-center p-20 text-slate-300 font-black uppercase text-[10px]">Không tìm thấy thuốc</div>`;
                 return;
             }
 
-            out.innerHTML = `<div class="bg-white p-4 border-b-2 border-slate-100 mb-4"><h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Kết quả phân tích biệt dược</h3></div>`;
-            
             meds.forEach(m => {
-                // Tách Biệt dược (trong ngoặc) và Hoạt chất
                 let brand = "";
-                const brandMatch = m.match(/\(([^)]+)\)/);
-                if(brandMatch) brand = brandMatch[1];
-
-                // Làm sạch tên chung
                 let generic = m.replace(/\d+\s*(VIÊN|GÓI|ỐNG|LỌ|MG|ML|G).*$/i, "").replace(/^\d+[\s.]*/, "").trim();
                 
-                // Nếu không có biệt dược trong ngoặc, lấy 2 từ đầu tiên làm đại diện
-                const displayTitle = brand ? brand : generic.split(' ').slice(0, 3).join(' ');
+                // Trích xuất biệt dược trong ngoặc
+                const brandMatch = m.match(/\(([^)]+)\)/);
+                if(brandMatch) {
+                    brand = brandMatch[1].toUpperCase();
+                    // Nếu biệt dược là định dạng ODT hoặc hàm lượng, giữ nguyên
+                    generic = generic.replace(`(${brandMatch[1]})`, "").trim();
+                } else {
+                    // Nếu không có ngoặc, lấy 2 từ đầu làm tên chính (Dự phòng)
+                    const parts = generic.split(' ');
+                    brand = parts.slice(0, 2).join(' ').toUpperCase();
+                }
+
+                // Lọc bỏ từ "DƯỚI DẠNG" khỏi tiêu đề
+                if(brand.includes("DƯỚI DẠNG")) brand = brand.replace("DƯỚI DẠNG", "").trim();
 
                 out.innerHTML += `
-                    <div class="med-card p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div class="flex-1">
-                            <div class="brand-name mb-1">${displayTitle}</div>
-                            <div class="generic-name">${generic}</div>
-                            <div class="mt-3 flex items-center space-x-2">
-                                <span class="bg-blue-50 text-blue-700 text-[8px] font-black px-2 py-0.5 rounded uppercase border border-blue-100">Dược thư QG 2024</span>
-                                <span class="text-[8px] font-bold text-slate-300 uppercase">Thông tư 20/2022/TT-BYT</span>
+                    <div class="med-card p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div class="space-y-1">
+                            <div class="brand-header">${brand}</div>
+                            <div class="generic-sub">Hoạt chất: ${generic}</div>
+                            <div class="pt-2 flex gap-2">
+                                <span class="text-[8px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">DƯỢC THƯ QG 2024</span>
+                                <span class="text-[8px] font-black text-slate-400 px-2 py-0.5 rounded border border-slate-100 uppercase">TT 20/2022/TT-BYT</span>
                             </div>
                         </div>
                         <div class="shrink-0">
-                            <span class="bg-emerald-500 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase shadow-md">Phù hợp BHYT</span>
+                            <span class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase shadow-lg shadow-emerald-100">Phù hợp BHYT</span>
                         </div>
                     </div>
                 `;
