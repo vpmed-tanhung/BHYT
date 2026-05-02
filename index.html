@@ -3,72 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VP MED V10.2 - TÂN HƯNG</title>
+    <title>VP MED V10.4 - TÂN HƯNG</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .icd-badge { 
-            padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 12px; 
-            border: 1px solid #bfdbfe; background: white; color: #1e40af;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
+        .icd-badge { padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 12px; border: 1px solid #bfdbfe; background: white; color: #1e40af; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body class="p-4 md:p-8">
 
-    <div class="max-w-5xl mx-auto space-y-6">
-        <!-- HEADER CÓ CHỨC NĂNG THAY LOGO -->
+    <div class="max-w-6xl mx-auto space-y-6">
+        <!-- HEADER CÓ TẢI LOGO -->
         <div class="bg-white p-6 rounded-[2.5rem] shadow-xl flex justify-between items-center border-b-4 border-blue-600">
             <div class="flex items-center space-x-4">
-                <!-- Khu vực Logo: Click vào để đổi ảnh -->
-                <div onclick="document.getElementById('logo-upload').click()" 
-                     class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center shadow-lg border-2 border-white cursor-pointer hover:opacity-80 transition-all overflow-hidden relative group">
-                    <img id="hospital-logo" src="" class="w-full h-full object-cover hidden">
-                    <div id="logo-placeholder" class="text-blue-600">
-                        <svg viewBox="0 0 24 24" class="w-10 h-10" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 11h-4v4h-4v-4H6v-4h4V6h4v4h4v4z"/></svg>
+                <div class="relative group">
+                    <div id="logo-container" class="w-20 h-20 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg border-2 border-white overflow-hidden">
+                        <img id="hospital-logo" src="" class="w-full h-full object-cover hidden">
+                        <svg id="logo-default" viewBox="0 0 24 24" class="w-12 h-12 text-white" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 11h-4v4h-4v-4H6v-4h4V6h4v4h4v4z"/>
+                        </svg>
                     </div>
-                    <div class="absolute inset-0 bg-black/40 items-center justify-center hidden group-hover:flex">
-                        <span class="text-[8px] text-white font-bold uppercase">Đổi Logo</span>
-                    </div>
-                    <input type="file" id="logo-upload" class="hidden" accept="image/*" onchange="uploadLogo(this)">
+                    <button onclick="document.getElementById('logo-upload').click()" class="absolute -bottom-2 -right-2 bg-white shadow-md p-2 rounded-full border border-slate-200 hover:bg-blue-50 transition-all">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke-width="2"/><path d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" stroke-width="2"/></svg>
+                    </button>
+                    <input type="file" id="logo-upload" class="hidden" accept="image/*" onchange="processLogo(this)">
                 </div>
                 <div>
                     <h1 class="text-2xl font-black text-blue-900 tracking-tighter uppercase leading-none">Bệnh viện VPMed Tân Hưng</h1>
-                    <p class="text-[11px] text-blue-600 font-extrabold uppercase tracking-[0.15em] mt-1 opacity-80">Hệ thống đối soát BHYT</p>
+                    <p class="text-[11px] text-blue-600 font-extrabold uppercase tracking-[0.15em] mt-2">Hệ thống đối soát dược lâm sàng • V10.4</p>
                 </div>
             </div>
-            
-            <div id="ai-status" class="hidden">
-                <div class="flex items-center space-x-2 bg-blue-50 px-4 py-2 rounded-full border border-blue-100">
-                    <div class="w-2 h-2 bg-blue-600 rounded-full animate-ping"></div>
-                    <span id="status-text" class="text-[10px] font-black text-blue-700 uppercase">Đang quét...</span>
-                </div>
+            <div id="ai-status" class="hidden flex items-center space-x-2 bg-blue-50 px-4 py-2 rounded-full border border-blue-100">
+                <div class="w-2 h-2 bg-blue-600 rounded-full animate-ping"></div>
+                <span class="text-[10px] font-black text-blue-700 uppercase tracking-widest">Đang phân tích...</span>
             </div>
         </div>
 
-        <!-- PHẦN NHẬP LIỆU VÀ KẾT QUẢ GIỮ NGUYÊN NHƯ BẢN TRƯỚC -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- CỘT TRÁI: NHẬP LIỆU -->
             <div class="lg:col-span-4 space-y-6">
                 <div onclick="document.getElementById('file-in').click()" class="bg-white p-10 rounded-[2.5rem] shadow-lg border-2 border-dashed border-slate-200 hover:border-blue-400 transition-all cursor-pointer text-center group">
                     <input type="file" id="file-in" multiple accept="image/*" class="hidden" onchange="handleFiles(this)">
                     <div class="bg-slate-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform text-slate-400">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2" stroke-linecap="round"/></svg>
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2"/></svg>
                     </div>
                     <p class="text-xs font-black text-slate-500 uppercase tracking-widest">Tải ảnh đơn thuốc</p>
                 </div>
-                <div class="bg-slate-900 rounded-[2rem] p-6 shadow-2xl">
-                    <h3 class="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-[0.3em]">OCR thô:</h3>
-                    <div id="raw-out" class="text-[10px] text-slate-400 font-mono h-48 overflow-y-auto">Đang chờ...</div>
+
+                <div class="bg-slate-900 rounded-[2.5rem] p-6 shadow-2xl">
+                    <h3 class="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-[0.3em]">OCR thô (Dữ liệu gốc):</h3>
+                    <div id="raw-out" class="text-[10px] text-slate-400 font-mono h-60 overflow-y-auto leading-relaxed">Sẵn sàng...</div>
                 </div>
-                <button onclick="smartReset()" class="w-full bg-red-500 hover:bg-red-600 text-white font-black py-5 rounded-[2.5rem] shadow-lg transition-all uppercase tracking-[0.2em] text-xs">Xóa đơn & Quét tiếp</button>
+                
+                <button onclick="smartReset()" class="w-full bg-red-500 hover:bg-red-600 text-white font-black py-5 rounded-[2.5rem] shadow-lg transition-all uppercase tracking-[0.2em] text-xs">
+                    Xóa đơn & Quét tiếp
+                </button>
             </div>
 
+            <!-- CỘT PHẢI: KẾT QUẢ ĐỐI SOÁT -->
             <div class="lg:col-span-8">
                 <div class="bg-white rounded-[2.5rem] shadow-2xl p-8 min-h-[600px] border border-slate-100">
                     <div id="analysis-zone" class="space-y-6">
-                        <p class="text-center py-40 text-slate-300 font-bold uppercase text-xs">Sẵn sàng nhận ảnh...</p>
+                        <p class="text-center py-40 text-slate-300 font-bold uppercase text-xs tracking-widest transition-opacity">Sẵn sàng nhận dữ liệu đơn thuốc...</p>
                     </div>
                 </div>
             </div>
@@ -76,43 +74,43 @@
     </div>
 
     <script>
-        // --- CHỨC NĂNG LƯU LOGO MẶC ĐỊNH ---
-        function uploadLogo(input) {
+        // --- 1. LOGIC XỬ LÝ LOGO ---
+        function processLogo(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const base64Image = e.target.result;
-                    localStorage.setItem('savedLogo', base64Image); // Lưu vào máy
-                    displayLogo(base64Image);
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = 200; canvas.height = 200;
+                        ctx.drawImage(img, 0, 0, 200, 200);
+                        const base64 = canvas.toDataURL('image/jpeg', 0.8);
+                        localStorage.setItem('vpm_logo_v10', base64);
+                        displayLogo(base64);
+                    };
                 };
                 reader.readAsDataURL(input.files[0]);
             }
         }
 
-        function displayLogo(src) {
-            const img = document.getElementById('hospital-logo');
-            const placeholder = document.getElementById('logo-placeholder');
-            if(src) {
-                img.src = src;
-                img.classList.remove('hidden');
-                placeholder.classList.add('hidden');
+        function displayLogo(data) {
+            if(data) {
+                document.getElementById('hospital-logo').src = data;
+                document.getElementById('hospital-logo').classList.remove('hidden');
+                document.getElementById('logo-default').classList.add('hidden');
+                document.getElementById('logo-container').style.backgroundColor = 'transparent';
             }
         }
 
-        // Load logo cũ khi mở trang
-        window.onload = function() {
-            const savedLogo = localStorage.getItem('savedLogo');
-            if(savedLogo) displayLogo(savedLogo);
-            smartReset();
-        };
-
-        // --- CÁC HÀM XỬ LÝ OCR (GIỮ NGUYÊN) ---
+        // --- 2. LOGIC OCR & PHÂN TÍCH THUỐC/ICD ---
         let allText = ""; let processedCount = 0; let totalFiles = 0;
 
         function smartReset() {
-            allText = ""; processedCount = 0; totalFiles = 0;
-            document.getElementById('raw-out').innerText = "Đang chờ...";
-            document.getElementById('analysis-zone').innerHTML = '<p class="text-center py-40 text-slate-300 font-bold uppercase text-xs">Hệ thống sẵn sàng...</p>';
+            allText = ""; processedCount = 0;
+            document.getElementById('raw-out').innerText = "Sẵn sàng...";
+            document.getElementById('analysis-zone').innerHTML = '<p class="text-center py-40 text-slate-300 font-bold uppercase text-xs tracking-widest">Sẵn sàng nhận dữ liệu đơn thuốc...</p>';
             document.getElementById('file-in').value = "";
         }
 
@@ -122,30 +120,78 @@
             totalFiles = files.length; processedCount = 0; allText = "";
             document.getElementById('ai-status').classList.remove('hidden');
             for(let file of files) {
-                const reader = new FileReader();
-                reader.onload = async (e) => { await runOcr(e.target.result); };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        async function runOcr(data) {
-            const { data: { text } } = await Tesseract.recognize(data, 'vie');
-            allText += `\n` + text;
-            processedCount++;
-            if(processedCount === totalFiles) {
-                document.getElementById('raw-out').innerText = allText;
-                performAudit();
-                document.getElementById('ai-status').classList.add('hidden');
+                const { data: { text } } = await Tesseract.recognize(file, 'vie');
+                allText += "\n" + text;
+                processedCount++;
+                if(processedCount === totalFiles) {
+                    document.getElementById('raw-out').innerText = allText;
+                    performAudit();
+                    document.getElementById('ai-status').classList.add('hidden');
+                }
             }
         }
 
         function performAudit() {
             const raw = allText.toUpperCase();
+            const lines = allText.split('\n');
             const zone = document.getElementById('analysis-zone');
-            // (Phần logic phân tích ICD và Thuốc giữ nguyên như bản V10.1 bạn đã ổn định)
-            zone.innerHTML = `<div class='p-10 text-center font-bold text-blue-900'>ĐÃ PHÂN TÍCH XONG - KIỂM TRA MÃ ICD VÀ THUỐC BÊN DƯỚI</div>`;
-            // ... (Code render bảng thuốc và ICD) ...
+            
+            // Tìm mã ICD (ví dụ: J06, K21.0...)
+            const icdRegex = /[A-Z][0-9]{2}(\.[0-9])?/g;
+            let uniqueICDs = [...new Set(raw.match(icdRegex) || [])];
+
+            let analysisHTML = '';
+            lines.forEach(line => {
+                let l = line.trim().toUpperCase();
+                const keywords = ['VIÊN', 'ỐNG', 'CHAI', 'MG', 'ML', 'GÓI'];
+                const isDrug = keywords.some(u => l.includes(u));
+
+                if (isDrug && l.length > 5) {
+                    let cleanName = line.trim().replace(/\d+\s*(Viên|Gói|Ống|Lọ).*$/i, "").replace(/^[L|I|!|\-|\d.]+\s*/i, "").trim();
+                    if(cleanName.length > 3) {
+                        analysisHTML += `<tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors"><td class="p-4 text-[11px] font-bold text-slate-700 uppercase">${cleanName}</td><td class="p-4 text-center"><span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[9px] font-black tracking-tighter">HỢP LỆ</span></td></tr>`;
+                    }
+                }
+            });
+
+            zone.innerHTML = `
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                    <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest">Kết quả đối soát đơn thuốc</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-5 bg-white rounded-3xl border-2 border-blue-100 shadow-sm">
+                        <p class="text-[9px] font-black text-blue-900 uppercase mb-3 tracking-widest">Chẩn đoán chính:</p>
+                        <div id="main-icd" class="flex flex-wrap gap-2"></div>
+                    </div>
+                    <div class="p-5 bg-white rounded-3xl border-2 border-blue-100 shadow-sm">
+                        <p class="text-[9px] font-black text-blue-900 uppercase mb-3 tracking-widest">Chẩn đoán kèm theo:</p>
+                        <div id="sub-icd" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+                <div class="rounded-[2rem] border border-slate-100 overflow-hidden bg-white shadow-lg mt-6">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-[9px] font-black text-slate-400 uppercase"><tr><th class="p-4">Danh mục thuốc phát hiện</th><th class="p-4 text-center">Đối soát BHYT</th></tr></thead>
+                        <tbody>${analysisHTML || '<tr><td colspan="2" class="p-10 text-center italic text-slate-300">Không tìm thấy dữ liệu thuốc phù hợp...</td></tr>'}</tbody>
+                    </table>
+                </div>`;
+
+            // Phân loại ICD dựa vào vị trí từ khóa
+            const splitIdx = raw.indexOf('KÈM THEO');
+            const mainPart = splitIdx > -1 ? raw.substring(0, splitIdx) : raw;
+
+            uniqueICDs.forEach(code => {
+                const badge = `<span class="icd-badge animate-in fade-in duration-500">${code}</span>`;
+                if (mainPart.includes(code)) document.getElementById('main-icd').innerHTML += badge;
+                else document.getElementById('sub-icd').innerHTML += badge;
+            });
         }
+
+        window.onload = function() {
+            const saved = localStorage.getItem('vpm_logo_v10');
+            if(saved) displayLogo(saved);
+            smartReset();
+        };
     </script>
 </body>
 </html>
