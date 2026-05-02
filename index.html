@@ -3,20 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VP MED - TÂN HƯNG</title>
+    <title>VP MED V10.1 - TÂN HƯNG</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .icd-badge { 
-            padding: 6px 12px; 
-            border-radius: 8px; 
-            font-weight: 800; 
-            font-size: 12px; 
-            border: 1px solid #bfdbfe;
-            background: white;
-            color: #1e40af;
+            padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 12px; 
+            border: 1px solid #bfdbfe; background: white; color: #1e40af;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
     </style>
@@ -24,63 +19,60 @@
 <body class="p-4 md:p-8">
 
     <div class="max-w-5xl mx-auto space-y-6">
-     <!-- HEADER MỚI: ĐÃ SỬA LOGO VÀ CHỮ NHỎ -->
-<div class="bg-white p-6 rounded-[2.5rem] shadow-xl flex justify-between items-center border-b-4 border-blue-600">
-    <div class="flex items-center space-x-4">
-        <!-- LOGO: Sử dụng icon dự phòng nếu link ảnh chính bị lỗi -->
-        <div class="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg overflow-hidden border-2 border-white">
-            <img src="https://img.icons8.com/fluency/96/hospital-3.png" 
-                 onerror="this.src='https://img.icons8.com/ios-filled/50/ffffff/hospital-3.png'"
-                 alt="Logo" 
-                 class="w-12 h-12 object-contain">
+        <!-- HEADER CHUẨN VỚI LOGO TRỰC TIẾP -->
+        <div class="bg-white p-6 rounded-[2.5rem] shadow-xl flex justify-between items-center border-b-4 border-blue-600">
+            <div class="flex items-center space-x-4">
+                <!-- Logo sử dụng SVG nội bộ (Không bao giờ lỗi) -->
+                <div class="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg border-2 border-white">
+                    <svg viewBox="0 0 24 24" class="w-10 h-10 text-white" fill="currentColor">
+                        <path d="M19 3H5c-1.1 0-1.99.9-1.99 2L3 19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 11h-4v4h-4v-4H6v-4h4V6h4v4h4v4z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-blue-900 tracking-tighter uppercase leading-none">Bệnh viện VPMed Tân Hưng</h1>
+                    <p class="text-[11px] text-blue-600 font-extrabold uppercase tracking-[0.15em] mt-1 opacity-80">Hệ thống đối soát BHYT(Tham Khảo)</p>
+                </div>
+            </div>
+            <div id="ai-status" class="hidden">
+                <div class="flex items-center space-x-2 bg-blue-50 px-4 py-2 rounded-full border border-blue-100">
+                    <div class="w-2 h-2 bg-blue-600 rounded-full animate-ping"></div>
+                    <span id="status-text" class="text-[10px] font-black text-blue-700 uppercase">Đang quét...</span>
+                </div>
+            </div>
         </div>
-        <div>
-            <h1 class="text-2xl font-black text-blue-900 tracking-tighter uppercase leading-none">Bệnh viện VPMed Tân Hưng</h1>
-            <!-- DÒNG CHỮ NHỎ: Đã làm đậm màu và dễ đọc hơn -->
-            <p class="text-[11px] text-blue-600/70 font-extrabold uppercase tracking-[0.15em] mt-1">Hệ thống đối soát BHYT</p>
-        </div>
-    </div>
-    <div id="ai-status" class="hidden">
-        <div class="flex items-center space-x-2 bg-blue-50 px-4 py-2 rounded-full border border-blue-100">
-            <div class="w-2 h-2 bg-blue-600 rounded-full animate-ping"></div>
-            <span id="status-text" class="text-[10px] font-black text-blue-700 uppercase tracking-widest">Đang quét...</span>
-        </div>
-    </div>
-</div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <!-- CỘT TRÁI -->
             <div class="lg:col-span-4 space-y-6">
                 <div onclick="document.getElementById('file-in').click()" class="bg-white p-10 rounded-[2.5rem] shadow-lg border-2 border-dashed border-slate-200 hover:border-blue-400 transition-all cursor-pointer text-center group">
                     <input type="file" id="file-in" multiple accept="image/*" class="hidden" onchange="handleFiles(this)">
-                    <div class="bg-slate-50 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                        <svg class="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2" stroke-linecap="round"/></svg>
+                    <div class="bg-slate-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2" stroke-linecap="round"/></svg>
                     </div>
                     <p class="text-xs font-black text-slate-500 uppercase tracking-widest">Tải ảnh đơn thuốc</p>
                 </div>
 
                 <div class="bg-slate-900 rounded-[2rem] p-6 shadow-2xl">
-                    <h3 class="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-[0.3em]">Dữ liệu thô (OCR):</h3>
-                    <div id="raw-out" class="text-[10px] text-slate-400 font-mono h-64 overflow-y-auto leading-relaxed italic">Đang chờ...</div>
+                    <h3 class="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-[0.3em]">OCR thô:</h3>
+                    <div id="raw-out" class="text-[10px] text-slate-400 font-mono h-48 overflow-y-auto leading-relaxed">Đang chờ dữ liệu...</div>
                 </div>
                 
                 <button onclick="smartReset()" class="w-full bg-red-500 hover:bg-red-600 text-white font-black py-5 rounded-[2.5rem] shadow-lg transition-all uppercase tracking-[0.2em] text-xs">
-                    Xóa đơn & Quét tiếp
+                    Xóa & Quét tiếp
                 </button>
             </div>
 
             <!-- CỘT PHẢI -->
             <div class="lg:col-span-8">
-                <div class="bg-white rounded-[2.5rem] shadow-2xl p-8 min-h-[650px] border border-slate-100">
+                <div class="bg-white rounded-[2.5rem] shadow-2xl p-8 min-h-[600px] border border-slate-100">
                     <div class="flex justify-between items-center mb-8">
                         <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest flex items-center">
-                            <span class="w-2 h-6 bg-blue-600 rounded-full mr-3"></span>Bảng đối soát chuyên môn
+                            <span class="w-2 h-6 bg-blue-600 rounded-full mr-3"></span>Kết quả phân tích
                         </h2>
-                        <span class="bg-blue-600 text-white text-[9px] font-black px-3 py-1 rounded-full uppercase italic">VP-V10.1</span>
                     </div>
 
                     <div id="analysis-zone" class="space-y-6">
-                        <p class="text-center py-40 text-slate-300 font-bold uppercase text-xs tracking-widest">Hệ thống sẵn sàng...</p>
+                        <!-- Kết quả sẽ hiện ở đây -->
                     </div>
                 </div>
             </div>
@@ -93,8 +85,7 @@
         function smartReset() {
             allText = ""; processedCount = 0; totalFiles = 0;
             document.getElementById('raw-out').innerText = "Đang chờ...";
-            document.getElementById('analysis-zone').innerHTML = '<p class="text-center py-40 text-slate-300 font-bold uppercase text-xs tracking-widest">Hệ thống sẵn sàng...</p>';
-            document.getElementById('file-in').value = "";
+            document.getElementById('analysis-zone').innerHTML = '<p class="text-center py-40 text-slate-300 font-bold uppercase text-xs">Sẵn sàng nhận ảnh...</p>';
         }
 
         async function handleFiles(input) {
@@ -113,7 +104,6 @@
             const { data: { text } } = await Tesseract.recognize(data, 'vie');
             allText += `\n` + text;
             processedCount++;
-            document.getElementById('status-text').innerText = `QUÉT: ${processedCount}/${totalFiles}`;
             if(processedCount === totalFiles) {
                 document.getElementById('raw-out').innerText = allText;
                 performAudit();
@@ -125,76 +115,59 @@
             const lines = allText.split('\n');
             const zone = document.getElementById('analysis-zone');
             
-            // 1. QUÉT ICD-10
             const icdRegex = /[A-Z][0-9]{2}(\.[0-9])?/g;
             let uniqueICDs = [...new Set(raw.match(icdRegex) || [])];
 
-            // 2. LỌC THUỐC
             let analysisHTML = '';
             lines.forEach(line => {
                 let l = line.trim().toUpperCase();
-                const trashKeywords = ['UỐNG', 'NGÀY', 'MỖI', 'LIỀU', 'CHIA', 'SÁNG', 'CHIỀU', 'TỐI', 'SAU ĂN', 'TRƯỚC ĂN'];
-                const isTrash = trashKeywords.some(word => l.includes(word));
-                const drugUnits = ['VIÊN', 'ỐNG', 'GÓI', 'CHAI', 'LỌ', 'MG', 'ML'];
-                const hasUnit = drugUnits.some(unit => l.includes(unit));
+                const trash = ['UỐNG', 'NGÀY', 'SÁNG', 'TỐI', 'VIÊN', 'GÓI'];
+                const isDrug = ['VIÊN', 'ỐNG', 'CHAI', 'MG', 'ML'].some(u => l.includes(u));
 
-                if (hasUnit && !isTrash && !/CHẨN ĐOÁN|KÈM THEO/i.test(l) && l.length > 4) {
-                    let cleanName = line.trim().replace(/\s*[-]*\s*\d+\s*(Viên|Gói|Ống|Lọ|Chai|Mg|Ml).*$/i, "");
-                    cleanName = cleanName.replace(/^[<|L|I|!|\-|\d.]+\s*/i, "").trim();
-
-                    if (cleanName.length > 2) {
-                        analysisHTML += `
-                            <tr class="border-b border-slate-50 hover:bg-slate-50">
-                                <td class="p-4">
-                                    <div class="font-bold text-slate-800 text-[11px] uppercase">${cleanName}</div>
-                                    <div class="text-[9px] text-slate-400 mt-1 italic">● Chỉ định phù hợp với mã bệnh.</div>
-                                </td>
-                                <td class="p-4 text-center text-[10px] font-black text-green-600">✓ HỢP LỆ</td>
-                            </tr>`;
+                if (isDrug && !trash.every(t => !l.includes(t)) && l.length > 5) {
+                    let clean = line.trim().replace(/\d+\s*(Viên|Gói|Ống|Lọ).*$/i, "").replace(/^[L|I|!|\-|\d.]+\s*/i, "").trim();
+                    if(clean.length > 3) {
+                        analysisHTML += `<tr class="border-b border-slate-50"><td class="p-4 text-[11px] font-bold text-slate-700 uppercase">${clean}</td><td class="p-4 text-center text-green-600 font-black text-[10px]">HỢP LỆ</td></tr>`;
                     }
                 }
             });
 
-            // 3. GIAO DIỆN CHIA 3 KHU VỰC ICD
             zone.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="p-5 bg-white rounded-3xl border border-blue-200 shadow-sm">
-                        <p class="text-[9px] font-black text-blue-900 uppercase mb-3 tracking-widest">Mã bệnh chính ICD-10:</p>
+                        <p class="text-[9px] font-black text-blue-900 uppercase mb-3 tracking-widest">Mã bệnh chính:</p>
                         <div id="main-icd" class="flex flex-wrap gap-2"></div>
                     </div>
                     <div class="p-5 bg-white rounded-3xl border border-blue-200 shadow-sm">
-                        <p class="text-[9px] font-black text-blue-900 uppercase mb-3 tracking-widest">Mã bệnh kèm theo:</p>
+                        <p class="text-[9px] font-black text-blue-900 uppercase mb-3 tracking-widest">Kèm theo:</p>
                         <div id="sub-icd" class="flex flex-wrap gap-2"></div>
                     </div>
                 </div>
                 <div class="p-5 bg-slate-50 rounded-3xl border border-slate-200">
-                    <p class="text-[9px] font-black text-slate-500 uppercase mb-3 tracking-widest">Tất cả mã ICD phát hiện:</p>
+                    <p class="text-[9px] font-black text-slate-500 uppercase mb-3 tracking-widest">Tất cả ICD phát hiện:</p>
                     <div id="all-icd" class="flex flex-wrap gap-2"></div>
                 </div>
                 <div class="rounded-3xl border border-slate-200 overflow-hidden bg-white shadow-sm">
-                    <table class="w-full">
-                        <thead class="bg-slate-50 text-slate-500 text-[9px] uppercase font-black">
-                            <tr><th class="p-4 text-left">Tên thuốc phân tích</th><th class="p-4 text-center">Đánh giá</th></tr>
-                        </thead>
-                        <tbody>${analysisHTML || '<tr><td colspan="2" class="p-10 text-center italic text-slate-300">Không tìm thấy thuốc...</td></tr>'}</tbody>
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-[9px] font-black text-slate-500 uppercase"><tr><th class="p-4">Tên thuốc</th><th class="p-4 text-center">Trạng thái</th></tr></thead>
+                        <tbody>${analysisHTML || '<tr><td colspan="2" class="p-10 text-center italic text-slate-300">Không lọc được thuốc...</td></tr>'}</tbody>
                     </table>
                 </div>`;
 
-            // 4. ĐỔ MÃ VÀO Ô
-            const diagText = raw.split('KÈM THEO:')[0];
-            const subText = raw.split('KÈM THEO:')[1] || "";
+            const splitIdx = raw.indexOf('KÈM THEO');
+            const mainPart = splitIdx > -1 ? raw.substring(0, splitIdx) : raw;
 
             uniqueICDs.forEach(code => {
                 const badge = `<span class="icd-badge">${code}</span>`;
                 document.getElementById('all-icd').innerHTML += badge;
-                if (diagText.includes(code)) {
-                    document.getElementById('main-icd').innerHTML += badge;
-                } else {
-                    document.getElementById('sub-icd').innerHTML += badge;
-                }
+                if (mainPart.includes(code)) document.getElementById('main-icd').innerHTML += badge;
+                else document.getElementById('sub-icd').innerHTML += badge;
             });
             document.getElementById('ai-status').classList.add('hidden');
         }
+
+        // Tự động chạy khi mở trang
+        window.onload = smartReset;
     </script>
 </body>
 </html>
